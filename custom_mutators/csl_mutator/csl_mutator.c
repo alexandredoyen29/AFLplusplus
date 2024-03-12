@@ -37,6 +37,17 @@ void stringList_addString(struct stringListNode** stringList, char* contentToAdd
     }
 }
 
+void stringList_free(struct stringListNode** stringList)
+{
+    if ((*stringList) != (struct stringListNode*)NULL)
+    {
+        stringList_free(&((*stringList)->nextNode));
+    }
+
+    free(*stringList);
+    *stringList = (struct stringListNode*)NULL;
+}
+
 struct cslMutatorIntRep* parseCsl(char* cslContent)
 {
     struct cslMutatorIntRep* result = malloc(sizeof(struct cslMutatorIntRep));
@@ -90,6 +101,8 @@ int main()
     testResult = parseCsl(test);
 
     stringList_printStringList(&(testResult->baseInput));
+
+    stringList_free(&(testResult->baseInput));
 
     return EXIT_SUCCESS;
 }
