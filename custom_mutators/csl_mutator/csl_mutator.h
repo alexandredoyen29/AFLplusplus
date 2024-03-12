@@ -2,6 +2,11 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
+
+#ifdef DEBUG
+    #include <stdio.h>
+#endif
 
 struct stringListNode
 {
@@ -19,8 +24,12 @@ struct stringListNode* stringList_init();
 void stringList_addString(struct stringListNode** stringList, char* contentToAdd);
 
 // Fonctions internes pour le mutateur
-void fail();
 struct cslMutatorIntRep* parseCsl(char* cslContent);
+
+#ifdef DEBUG
+    // DEBUG
+    void stringList_printStringList(struct stringListNode** stringList);
+#endif
 
 // Fonctions pour AFL++
 /*void *afl_custom_init(afl_state_t *afl, unsigned int seed);
