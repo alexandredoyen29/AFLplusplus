@@ -40,19 +40,26 @@ void stringList_addString(struct stringListNode** stringList, char* contentToAdd
 struct cslMutatorIntRep* parseCsl(char* cslContent)
 {
     struct cslMutatorIntRep* result = malloc(sizeof(struct cslMutatorIntRep));
-    char* cslContentPart;
+    char* cslContentPart = malloc(strlen(cslContent));
 
-    assert(result != NULL);
+    assert(result != (struct cslMutatorIntRep*)NULL);
+    assert(cslContentPart != (char*)NULL);
+
+    strcpy(cslContentPart, cslContent);
 
     result->baseInput = stringList_init();
 
-    cslContentPart = strtok(cslContent, "*");
+    strtok(cslContentPart, "*");
     stringList_addString(&(result->baseInput), cslContentPart);
 
-    while (cslContentPart != (char*)NULL)
+    while ((cslContentPart != (char*)NULL) && (cslContentPart != NULL))
     {
-        cslContentPart = strtok(cslContent, "*");
-        stringList_addString(&(result->baseInput), cslContentPart);
+        cslContentPart = strtok((char*)NULL, "*");
+
+        if (cslContentPart != (char*)NULL)
+        {
+            stringList_addString(&(result->baseInput), cslContentPart);
+        }
     }
 
     return result;
@@ -63,11 +70,13 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     void stringList_printStringList(struct stringListNode** stringList)
     {
         struct stringListNode* currentNode = *stringList;
+        int i = 0;
 
         while (currentNode != (struct stringListNode*)NULL)
         {
-            printf("%s\n", currentNode->nodeContent);
+            printf("list[%d] = %s\n", i, currentNode->nodeContent);
             currentNode = currentNode->nextNode;
+            ++i;
         }
     }
 #endif
@@ -75,7 +84,7 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
 // TODO : Sera à retirer à la fin (Ou du moins quand la partie AFL++ sera implémentée)
 int main()
 {
-    char* test = "USER *";
+    char* test = "USER *\nLIST\nCWD *\nPWD";
     struct cslMutatorIntRep* testResult;
 
     testResult = parseCsl(test);
