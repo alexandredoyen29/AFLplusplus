@@ -23,6 +23,8 @@ struct cslMutatorIntRep
 struct stringListNode* stringList_init();
 void stringList_addString(struct stringListNode** stringList, char* contentToAdd);
 void stringList_free(struct stringListNode** stringList);
+void stringList_iter(struct stringListNode** stringList, void (*action)(char* str));
+void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i));
 
 // Fonctions internes pour le mutateur
 struct cslMutatorIntRep* parseCsl(char* cslContent);

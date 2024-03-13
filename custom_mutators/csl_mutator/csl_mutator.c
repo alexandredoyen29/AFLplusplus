@@ -48,6 +48,32 @@ void stringList_free(struct stringListNode** stringList)
     *stringList = (struct stringListNode*)NULL;
 }
 
+void stringList_iter(struct stringListNode** stringList, void (*action)(char* str))
+{
+    struct stringListNode* currentNode = *stringList;
+
+    while (currentNode != (struct stringListNode*)NULL)
+    {
+        action(currentNode->nodeContent);
+
+        currentNode = currentNode->nextNode;
+    }
+}
+
+void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i))
+{
+    struct stringListNode* currentNode = *stringList;
+    int i = 0;
+
+    while (currentNode != (struct stringListNode*)NULL)
+    {
+        action(currentNode->nodeContent, i);
+
+        currentNode = currentNode->nextNode;
+        i = i + 1;
+    }
+}
+
 struct cslMutatorIntRep* parseCsl(char* cslContent)
 {
     struct cslMutatorIntRep* result = malloc(sizeof(struct cslMutatorIntRep));
@@ -78,17 +104,19 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
 
 #ifdef DEBUG
     // DEBUG
+    void printStr(char* str)
+    {
+        printf("%s\n", str);
+    }
+
+    void printStri(char* str, int i)
+    {
+        printf("tab[%d] = %s\n", i, str);
+    }
+
     void stringList_printStringList(struct stringListNode** stringList)
     {
-        struct stringListNode* currentNode = *stringList;
-        int i = 0;
-
-        while (currentNode != (struct stringListNode*)NULL)
-        {
-            printf("list[%d] = %s\n", i, currentNode->nodeContent);
-            currentNode = currentNode->nextNode;
-            ++i;
-        }
+        stringList_iteri(stringList, printStri);
     }
 #endif
 
