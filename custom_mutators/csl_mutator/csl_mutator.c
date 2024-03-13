@@ -102,6 +102,28 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     return result;
 }
 
+int readCslFromEnv_CSL_FILE(char* cslContent, size_t cslContentSize)
+{
+    char* filename = getenv("CSL_FILE");
+    int result;
+    FILE* file;
+
+    if (filename == (char*)NULL)
+    {
+        result = 1;
+    }
+    else
+    {
+        file = fopen(filename, "r");
+        fread(cslContent, 1, cslContentSize, file);
+        fclose(file);
+
+        result = 0;
+    }
+
+    return result;
+}
+
 #ifdef DEBUG
     // DEBUG
     void printStr(char* str)
@@ -123,20 +145,30 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
 struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
+    char cslContent[CSL_MAX_SIZE];
+    int cslReadResult;
 
     assert(mutator != (struct cslMutator*)NULL);
 
     srand(seed);    // Random initialization
 
+    // CSL Mutator initialization
+    cslReadResult = readCslFromEnv_CSL_FILE(cslContent, CSL_MAX_SIZE);
+    assert(cslReadResult == 0);
+    mutator->cslMutator = parseCsl(cslContent);
 
+    mutator->afl = afl;
+
+    return mutator;
 }
 
 // TODO : Sera à retirer à la fin (Ou du moins quand la partie AFL++ sera implémentée)
 int main()
 {
-    char* test = "USER *\nLIST\nCWD *\nPWD";
+    char test[CSL_MAX_SIZE];
     struct cslMutatorIntRep* testResult;
 
+    readCslFromEnv_CSL_FILE(test, CSL_MAX_SIZE);
     testResult = parseCsl(test);
 
     stringList_printStringList(&(testResult->baseInput));

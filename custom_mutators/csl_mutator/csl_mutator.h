@@ -1,12 +1,13 @@
+#ifndef CSL_MUTATOR_H
+#define CSL_MUTATOR_H
+
 #include "afl-fuzz.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
-
-#ifdef DEBUG
-    #include <stdio.h>
-#endif
+#include <stdio.h>
 
 struct stringListNode
 {
@@ -33,8 +34,9 @@ void stringList_free(struct stringListNode** stringList);
 void stringList_iter(struct stringListNode** stringList, void (*action)(char* str));
 void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i));
 
-// Fonctions internes pour le mutateur
+// Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
+int readCslFromEnv_CSL_FILE(char* cslContent, size_t cslContentSize);
 
 #ifdef DEBUG
     // DEBUG
@@ -70,3 +72,5 @@ u8 afl_custom_queue_new_entry(void *data, const unsigned char *filename_new_queu
 const char* afl_custom_introspection(my_mutator_t *data);
 void afl_custom_deinit(void *data);*/
 #pragma endregion
+
+#endif
