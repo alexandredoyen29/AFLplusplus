@@ -142,6 +142,8 @@ int readCslFromEnv_CSL_FILE(char* cslContent, size_t cslContentSize)
     }
 #endif
 
+#pragma region AFL++ functions
+
 struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
@@ -161,6 +163,13 @@ struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     return mutator;
 }
+
+size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
+{
+    return 0;
+}
+
+#pragma endregion
 
 // TODO : Sera à retirer à la fin (Ou du moins quand la partie AFL++ sera implémentée)
 int main()

@@ -56,10 +56,29 @@ int readCslFromEnv_CSL_FILE(char* cslContent, size_t cslContentSize);
  *         Return NULL on error.
  */
 struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed);
+
 /*unsigned int afl_custom_fuzz_count(void *data, const unsigned char *buf, size_t buf_size);
-void afl_custom_splice_optout(void *data);
-size_t afl_custom_fuzz(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size);
-const char *afl_custom_describe(void *data, size_t max_description_len);
+void afl_custom_splice_optout(void *data);*/
+
+/**
+ * Perform custom mutations on a given input
+ *
+ * (Optional for now. Required in the future)
+ *
+ * @param[in] data pointer returned in afl_custom_init for this fuzz case
+ * @param[in] buf Pointer to input data to be mutated
+ * @param[in] buf_size Size of input data
+ * @param[out] out_buf the buffer we will work on. we can reuse *buf. NULL on
+ * error.
+ * @param[in] add_buf Buffer containing the additional test case
+ * @param[in] add_buf_size Size of the additional test case
+ * @param[in] max_size Maximum size of the mutated output. The mutation must not
+ *     produce data larger than max_size.
+ * @return Size of the mutated output.
+ */
+size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size);
+
+/*const char *afl_custom_describe(void *data, size_t max_description_len);
 size_t afl_custom_post_process(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf);
 int afl_custom_init_trim(void *data, unsigned char *buf, size_t buf_size);
 size_t afl_custom_trim(void *data, unsigned char **out_buf);
