@@ -120,6 +120,17 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     }
 #endif
 
+struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
+{
+    struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
+
+    assert(mutator != (struct cslMutator*)NULL);
+
+    srand(seed);    // Random initialization
+
+
+}
+
 // TODO : Sera à retirer à la fin (Ou du moins quand la partie AFL++ sera implémentée)
 int main()
 {
