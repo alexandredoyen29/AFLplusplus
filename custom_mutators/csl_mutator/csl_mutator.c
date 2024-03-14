@@ -46,6 +46,14 @@ char* generateRandomString()
     return result;
 }
 
+char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
+{
+    char* generatedInput = malloc(MAX_STRING_SIZE * sizeof(char));
+    struct tuple_ptr_char concat;
+
+    assert(generatedInput != (char*)NULL);
+}
+
 #ifdef DEBUG
     // DEBUG
     void printStr(char* str)

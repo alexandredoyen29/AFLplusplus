@@ -11,6 +11,12 @@
 #include <string.h>
 #include <stdio.h>
 
+#define DEFINE_TUPLE_PTR(type)  struct tuple_ptr_##type \
+                                {                       \
+                                    type* a;            \
+                                    type* b;            \
+                                }
+
 struct cslMutatorIntRep
 {
     struct stringListNode* baseInput;
@@ -24,9 +30,12 @@ struct cslMutator
     struct cslMutatorIntRepListNode* cslMutatorsList;
 };
 
+DEFINE_TUPLE_PTR(char);
+
 // Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
 char* generateRandomString();
+char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL);
 
 #ifdef DEBUG
     // DEBUG

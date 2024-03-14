@@ -72,3 +72,17 @@ void stringList_iteri(struct stringListNode** stringList, void (*action)(char* s
         i = i + 1;
     }
 }
+
+void stringList_iterd(struct stringListNode* stringList, void (*action)(char* str, void* data), void* data)
+{
+    struct stringListNode* currentNode = stringList;
+    int i = 0;
+
+    while (currentNode != (struct stringListNode*)NULL)
+    {
+        action(currentNode->nodeContent, data);
+
+        currentNode = currentNode->nextNode;
+        i = i + 1;
+    }
+}

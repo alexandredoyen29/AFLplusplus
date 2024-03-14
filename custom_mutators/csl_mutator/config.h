@@ -3,5 +3,6 @@
 
 #define MAX_RANDOM_STRING_SIZE  2048
 #define MUTATION_ALPHABET       "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789\n"
+#define MAX_STRING_SIZE         2048
 
 #endif
