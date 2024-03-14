@@ -73,7 +73,7 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
 
     int main()
     {
-        /*char* cslTest = "USER toto\nUSER *\nPASSWD\nCWD *\nLS";
+        /*char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
         struct cslMutatorIntRepListNode* mutator = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
