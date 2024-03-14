@@ -49,10 +49,21 @@ char* generateRandomString()
 char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
 {
     char* generatedInput = calloc(MAX_STRING_SIZE, sizeof(char));   // The memory is set to 0
+    struct stringListNode* parsedCSLStaticData = parsedCSL->baseInput;
 
     assert(generatedInput != (char*)NULL);
 
-    
+    while (stringList_hasNext(parsedCSLStaticData) == true)
+    {
+        strncat(generatedInput, stringList_next(&parsedCSLStaticData), MAX_STRING_SIZE);
+
+        if (stringList_hasNext(parsedCSLStaticData) == true)
+        {
+            strncat(generatedInput, generateRandomString(), MAX_STRING_SIZE);
+        }
+    }
+
+    return generatedInput;
 }
 
 #ifdef DEBUG
@@ -74,23 +85,25 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
 
     int main()
     {
-        /*char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
+        char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
         struct cslMutatorIntRepListNode* mutator = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
         cslMutatorIntRepList_add(&mutator, cslTestIntRep);
 
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
-        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);*/
+        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);
 
         srand(time(NULL));
 
-        printf("%s\n", generateRandomString());
-        printf("%s\n", generateRandomString());
-        printf("%s\n", generateRandomString());
-        printf("%s\n", generateRandomString());
-        printf("%s\n", generateRandomString());
-        printf("%s\n", generateRandomString());
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep));
 
         return EXIT_SUCCESS;
     }
