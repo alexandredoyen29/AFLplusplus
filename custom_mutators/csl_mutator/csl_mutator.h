@@ -2,18 +2,13 @@
 #define CSL_MUTATOR_H
 
 #include "afl-fuzz.h"
-#include "config.h"
+#include "string_list.h"
+#include "csl_int_rep_list.h"
 
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-
-struct stringListNode
-{
-    char* nodeContent;
-    struct stringListNode* nextNode;
-};
 
 struct cslMutatorIntRep
 {
@@ -24,19 +19,11 @@ struct cslMutator
 {
     afl_state_t* afl;
 
-    struct cslMutatorIntRep* cslMutator;
+    struct cslMutatorIntRepListNode* cslMutatorsList;
 };
-
-// String lists
-struct stringListNode* stringList_init();
-void stringList_addString(struct stringListNode** stringList, char* contentToAdd);
-void stringList_free(struct stringListNode** stringList);
-void stringList_iter(struct stringListNode** stringList, void (*action)(char* str));
-void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i));
 
 // Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
-int readCslFromEnv_CSL_FILE(char* cslContent, size_t cslContentSize);
 
 #ifdef DEBUG
     // DEBUG
