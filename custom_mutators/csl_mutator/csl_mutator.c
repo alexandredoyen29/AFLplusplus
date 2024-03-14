@@ -28,6 +28,24 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     return result;
 }
 
+char* generateRandomString()
+{
+    char* alphabet = MUTATION_ALPHABET;
+    size_t size = (size_t)rand() % MAX_RANDOM_STRING_SIZE;
+    size_t sizeofAlphabet = strlen(alphabet);
+    int i = 0;
+    char* result = malloc((size + 1) * sizeof(char));
+
+    assert(result != (char*)NULL);
+    
+    for (i = 0; i < size; ++i)
+    {
+        result[i] = alphabet[rand() % sizeofAlphabet];
+    }
+
+    return result;
+}
+
 #ifdef DEBUG
     // DEBUG
     void printStr(char* str)
@@ -47,14 +65,23 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
 
     int main()
     {
-        char* cslTest = "USER iliana\nUSER *\nPASSWD\nCWD *\nLS";
+        /*char* cslTest = "USER iliana\nUSER *\nPASSWD\nCWD *\nLS";
         struct cslMutatorIntRepListNode* mutator = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
         cslMutatorIntRepList_add(&mutator, cslTestIntRep);
 
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
-        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);
+        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);*/
+
+        srand(time(NULL));
+
+        printf("%s\n", generateRandomString());
+        printf("%s\n", generateRandomString());
+        printf("%s\n", generateRandomString());
+        printf("%s\n", generateRandomString());
+        printf("%s\n", generateRandomString());
+        printf("%s\n", generateRandomString());
 
         return EXIT_SUCCESS;
     }
@@ -70,6 +97,7 @@ struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     srand(seed);    // Random initialization
 
+    mutator->currentMutationId = 0;
     mutator->cslMutatorsList = cslMutatorIntRepList_init();
     mutator->afl = afl;
 
@@ -78,6 +106,11 @@ struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
 size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
+    cslMutatorIntRepList_add(&(data->cslMutatorsList), parseCsl((char*)buf));
+    data->currentMutationId++;
+
+    // Mutate function call to add here
+
     return 0;
 }
 

@@ -4,6 +4,7 @@
 #include "afl-fuzz.h"
 #include "string_list.h"
 #include "csl_int_rep_list.h"
+#include "config.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -19,11 +20,13 @@ struct cslMutator
 {
     afl_state_t* afl;
 
+    int currentMutationId;
     struct cslMutatorIntRepListNode* cslMutatorsList;
 };
 
 // Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
+char* generateRandomString();
 
 #ifdef DEBUG
     // DEBUG
