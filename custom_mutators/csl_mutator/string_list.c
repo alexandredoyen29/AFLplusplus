@@ -86,3 +86,22 @@ void stringList_iterd(struct stringListNode* stringList, void (*action)(char* st
         i = i + 1;
     }
 }
+
+bool stringList_hasNext(struct stringListNode* stringList)
+{
+    return (stringList->nextNode != (struct stringListNode*)NULL);
+}
+
+char* stringList_next(struct stringListNode** stringListPtr)
+{
+    char* result = (char*)NULL;
+    struct stringListNode* list = *stringListPtr;
+
+    if (list != (struct stringListNode*)NULL)
+    {
+        result = list->nodeContent;
+        *stringListPtr = list->nextNode;
+    }
+
+    return result;
+}

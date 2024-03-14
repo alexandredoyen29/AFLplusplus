@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 struct stringListNode
 {
@@ -16,5 +17,7 @@ void stringList_free(struct stringListNode** stringList);
 void stringList_iter(struct stringListNode** stringList, void (*action)(char* str));
 void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i));
 void stringList_iterd(struct stringListNode* stringList, void (*action)(char* str, void* data), void* data);
+bool stringList_hasNext(struct stringListNode* stringList);
+char* stringList_next(struct stringListNode** stringListPtr);
 
 #endif

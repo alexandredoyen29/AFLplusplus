@@ -1,5 +1,5 @@
 CC=gcc
-CC_OPTIONS=-g -I../../include/ -Wall -DDEBUG
+CC_OPTIONS=-g -I../../include/ -Wall -Wno-unknown-pragmas -DDEBUG
 LD_OPTIONS=
 SRC=$(wildcard *.c)
 OBJ=$(SRC:.c=.o)

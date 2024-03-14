@@ -30,8 +30,6 @@ struct cslMutator
     struct cslMutatorIntRepListNode* cslMutatorsList;
 };
 
-DEFINE_TUPLE_PTR(char);
-
 // Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
 char* generateRandomString();
