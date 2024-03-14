@@ -44,12 +44,21 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     {
         stringList_iteri(stringList, printStri);
     }
-#endif
 
-int main()
-{
-    return EXIT_SUCCESS;
-}
+    int main()
+    {
+        char* cslTest = "USER iliana\nUSER *\nPASSWD\nCWD *\nLS";
+        struct cslMutatorIntRepListNode* mutator = cslMutatorIntRepList_init();
+        struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
+
+        cslMutatorIntRepList_add(&mutator, cslTestIntRep);
+
+        //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
+        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);
+
+        return EXIT_SUCCESS;
+    }
+#endif
 
 #pragma region AFL++ functions
 
