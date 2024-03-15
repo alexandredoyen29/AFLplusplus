@@ -76,6 +76,11 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
     return generatedInput;
 }
 
+void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
+{
+    stringList_free(&(target->baseInput));
+}
+
 #ifdef DEBUG
     // DEBUG
     void printStr(char* str)
@@ -95,31 +100,23 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
 
     int main()
     {
+        struct cslMutator mutator;
         char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
-        struct cslMutatorIntRepListNode* mutator = cslMutatorIntRepList_init();
+        struct cslMutatorIntRepListNode* mutatorIntRepList = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
-        cslMutatorIntRepList_add(&mutator, cslTestIntRep);
+        mutator.cslMutatorsList = mutatorIntRepList;
+
+        cslMutatorIntRepList_add(&mutatorIntRepList, cslTestIntRep);
 
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
         //stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
 
         srand(time(NULL));
 
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 3));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 4));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 5));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 6));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 7));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 8));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 9));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 10));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 11));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 12));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 13));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 14));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 15));
-        printf("%s\n", generateMutatedInput(cslTestIntRep, 16));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
+
+        afl_custom_deinit(&mutator);
 
         return EXIT_SUCCESS;
     }
@@ -146,6 +143,7 @@ size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_s
 {
     char* mutatedInput;
     int currentMutationId;
+    size_t mutatedInputLength;
 
     cslMutatorIntRepList_add(&(data->cslMutatorsList), parseCsl((char*)buf));
     currentMutationId = data->currentMutationId;
@@ -155,8 +153,17 @@ size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_s
     mutatedInput = generateMutatedInput(cslMutatorIntRepList_get(data->cslMutatorsList, currentMutationId), max_size);
 
     *out_buf = (unsigned char*)mutatedInput;
+    mutatedInputLength = strlen(mutatedInput);
 
-    return 0;
+    return mutatedInputLength;
+}
+
+void afl_custom_deinit(struct cslMutator* data)
+{
+    struct cslMutatorIntRepListNode* mutatorIntRepList = data->cslMutatorsList;
+
+    cslMutatorIntRepList_iter(mutatorIntRepList, cslMutatorIntRep_free);
+    cslMutatorIntRepList_free(&(data->cslMutatorsList));
 }
 
 #pragma endregion

@@ -35,6 +35,7 @@ struct cslMutator
 struct cslMutatorIntRep* parseCsl(char* cslContent);
 char* generateRandomString();
 char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize);
+void cslMutatorIntRep_free(struct cslMutatorIntRep* target);
 
 #ifdef DEBUG
     // DEBUG
@@ -86,8 +87,15 @@ unsigned char afl_custom_havoc_mutation_probability(void *data);
 unsigned char afl_custom_queue_get(void *data, const unsigned char *filename);
 void (*afl_custom_fuzz_send)(void *data, const u8 *buf, size_t buf_size);
 u8 afl_custom_queue_new_entry(void *data, const unsigned char *filename_new_queue, const unsigned int *filename_orig_queue);
-const char* afl_custom_introspection(my_mutator_t *data);
-void afl_custom_deinit(void *data);*/
+const char* afl_custom_introspection(my_mutator_t *data);*/
+
+/**
+ * Deinitialize everything
+ *
+ * @param data The data ptr from afl_custom_init
+ */
+void afl_custom_deinit(struct cslMutator* data);
+
 #pragma endregion
 
 #endif

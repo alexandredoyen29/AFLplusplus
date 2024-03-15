@@ -65,3 +65,15 @@ struct cslMutatorIntRep* cslMutatorIntRepList_get(struct cslMutatorIntRepListNod
 
     return result;
 }
+
+void cslMutatorIntRepList_iter(struct cslMutatorIntRepListNode* list, void (*action)(struct cslMutatorIntRep* str))
+{
+    struct cslMutatorIntRepListNode* currentNode = list;
+
+    while (currentNode != (struct cslMutatorIntRepListNode*)NULL)
+    {
+        action(currentNode->nodeContent);
+
+        currentNode = currentNode->nextNode;
+    }
+}
