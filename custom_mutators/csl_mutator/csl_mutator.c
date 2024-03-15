@@ -100,12 +100,12 @@ void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
 
     int main()
     {
-        struct cslMutator mutator;
+        struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
         char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
         struct cslMutatorIntRepListNode* mutatorIntRepList = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
-        mutator.cslMutatorsList = mutatorIntRepList;
+        mutator->cslMutatorsList = mutatorIntRepList;
 
         cslMutatorIntRepList_add(&mutatorIntRepList, cslTestIntRep);
 
@@ -116,7 +116,7 @@ void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
 
         printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
 
-        afl_custom_deinit(&mutator);
+        afl_custom_deinit(mutator);
 
         return EXIT_SUCCESS;
     }
@@ -164,6 +164,8 @@ void afl_custom_deinit(struct cslMutator* data)
 
     cslMutatorIntRepList_iter(mutatorIntRepList, cslMutatorIntRep_free);
     cslMutatorIntRepList_free(&(data->cslMutatorsList));
+
+    free(data);
 }
 
 #pragma endregion
