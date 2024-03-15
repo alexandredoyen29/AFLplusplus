@@ -112,8 +112,11 @@ void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
         //stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
 
-        srand(time(NULL));
+        srand(5);
 
+        printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
         printf("%s\n", generateMutatedInput(cslTestIntRep, MAX_STRING_SIZE));
 
         afl_custom_deinit(mutator);
