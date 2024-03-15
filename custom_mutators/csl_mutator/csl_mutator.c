@@ -92,17 +92,10 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
         cslMutatorIntRepList_add(&mutator, cslTestIntRep);
 
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
-        stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
+        //stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
 
         srand(time(NULL));
 
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
         printf("%s\n", generateMutatedInput(cslTestIntRep));
 
         return EXIT_SUCCESS;
