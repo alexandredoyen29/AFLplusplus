@@ -5,6 +5,7 @@
 #include "string_list.h"
 #include "csl_int_rep_list.h"
 #include "config.h"
+#include "utils.h"
 
 #include <stdlib.h>
 #include <assert.h>
@@ -33,7 +34,7 @@ struct cslMutator
 // Mutator's internals
 struct cslMutatorIntRep* parseCsl(char* cslContent);
 char* generateRandomString();
-char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL);
+char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize);
 
 #ifdef DEBUG
     // DEBUG

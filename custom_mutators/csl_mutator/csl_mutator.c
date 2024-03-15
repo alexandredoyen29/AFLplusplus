@@ -46,20 +46,30 @@ char* generateRandomString()
     return result;
 }
 
-char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
+char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
 {
-    char* generatedInput = calloc(MAX_STRING_SIZE, sizeof(char));   // The memory is set to 0
+    size_t generatedInputSize = min(maxSize, MAX_STRING_SIZE);
+    char* generatedInput = calloc(generatedInputSize, sizeof(char));   // The memory is set to 0
     struct stringListNode* parsedCSLStaticData = parsedCSL->baseInput;
+    size_t generatedInputLength = 0;
+    size_t generatedInputOldLength = 0;
+    size_t generatedInputRemainingSpace = generatedInputSize - 1;   // Trailing '\0'
 
     assert(generatedInput != (char*)NULL);
 
-    while (stringList_hasNext(parsedCSLStaticData) == true)
+    while ((stringList_hasNext(parsedCSLStaticData) == true) && (generatedInputRemainingSpace > 0))
     {
-        strncat(generatedInput, stringList_next(&parsedCSLStaticData), MAX_STRING_SIZE - 1);
+        strConcat(generatedInput, stringList_next(&parsedCSLStaticData), generatedInputSize - 1);
+        generatedInputLength += (strnlen(generatedInput, generatedInputSize) - generatedInputOldLength);
+        generatedInputRemainingSpace -= generatedInputLength;
+        generatedInputOldLength = generatedInputLength;
 
-        if (stringList_hasNext(parsedCSLStaticData) == true)
+        if ((stringList_hasNext(parsedCSLStaticData) == true) && (generatedInputRemainingSpace > 0))
         {
-            strncat(generatedInput, generateRandomString(), MAX_STRING_SIZE - 1);
+            strConcat(generatedInput, generateRandomString(), generatedInputSize - 1);
+            generatedInputLength += (strnlen(generatedInput, generatedInputSize) - generatedInputOldLength);
+            generatedInputRemainingSpace -= generatedInputLength;
+            generatedInputOldLength = generatedInputLength;
         }
     }
 
@@ -96,7 +106,20 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
 
         srand(time(NULL));
 
-        printf("%s\n", generateMutatedInput(cslTestIntRep));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 3));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 4));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 5));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 6));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 7));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 8));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 9));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 10));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 11));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 12));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 13));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 14));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 15));
+        printf("%s\n", generateMutatedInput(cslTestIntRep, 16));
 
         return EXIT_SUCCESS;
     }
@@ -121,10 +144,17 @@ struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
 size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
+    char* mutatedInput;
+    int currentMutationId;
+
     cslMutatorIntRepList_add(&(data->cslMutatorsList), parseCsl((char*)buf));
+    currentMutationId = data->currentMutationId;
     data->currentMutationId++;
 
     // Mutate function call to add here
+    mutatedInput = generateMutatedInput(cslMutatorIntRepList_get(data->cslMutatorsList, currentMutationId), max_size);
+
+    *out_buf = (unsigned char*)mutatedInput;
 
     return 0;
 }
