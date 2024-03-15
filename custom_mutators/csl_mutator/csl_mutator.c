@@ -55,11 +55,11 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
 
     while (stringList_hasNext(parsedCSLStaticData) == true)
     {
-        strncat(generatedInput, stringList_next(&parsedCSLStaticData), MAX_STRING_SIZE);
+        strncat(generatedInput, stringList_next(&parsedCSLStaticData), MAX_STRING_SIZE - 1);
 
         if (stringList_hasNext(parsedCSLStaticData) == true)
         {
-            strncat(generatedInput, generateRandomString(), MAX_STRING_SIZE);
+            strncat(generatedInput, generateRandomString(), MAX_STRING_SIZE - 1);
         }
     }
 
@@ -78,7 +78,7 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
         printf("tab[%d] = %s\n", i, str);
     }
 
-    void stringList_printStringList(struct stringListNode** stringList)
+    void stringList_printStringList(struct stringListNode* stringList)
     {
         stringList_iteri(stringList, printStri);
     }
@@ -92,7 +92,7 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL)
         cslMutatorIntRepList_add(&mutator, cslTestIntRep);
 
         //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
-        stringList_iteri(&(cslMutatorIntRepList_get(mutator, 0)->baseInput), printStri);
+        stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
 
         srand(time(NULL));
 

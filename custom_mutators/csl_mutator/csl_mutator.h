@@ -37,7 +37,7 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL);
 
 #ifdef DEBUG
     // DEBUG
-    void stringList_printStringList(struct stringListNode** stringList);
+    void stringList_printStringList(struct stringListNode* stringList);
 #endif
 
 #pragma region AFL++ functions

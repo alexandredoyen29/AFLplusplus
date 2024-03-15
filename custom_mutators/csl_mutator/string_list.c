@@ -5,9 +5,9 @@ struct stringListNode* stringList_init()
     return (struct stringListNode*)NULL;
 }
 
-void stringList_add(struct stringListNode** stringList, char* contentToAdd)
+void stringList_add(struct stringListNode** stringListPtr, char* contentToAdd)
 {
-    struct stringListNode* currentNode = *stringList;
+    struct stringListNode* currentNode = *stringListPtr;
 
     if (currentNode == (struct stringListNode*)NULL)
     {
@@ -18,7 +18,7 @@ void stringList_add(struct stringListNode** stringList, char* contentToAdd)
         currentNode->nodeContent = contentToAdd;
         currentNode->nextNode = (struct stringListNode*)NULL;
 
-        *stringList = currentNode;
+        *stringListPtr = currentNode;
     }
     else
     {
@@ -36,20 +36,20 @@ void stringList_add(struct stringListNode** stringList, char* contentToAdd)
     }
 }
 
-void stringList_free(struct stringListNode** stringList)
+void stringList_free(struct stringListNode** stringListPtr)
 {
-    if ((*stringList) != (struct stringListNode*)NULL)
+    if ((*stringListPtr) != (struct stringListNode*)NULL)
     {
-        stringList_free(&((*stringList)->nextNode));
+        stringList_free(&((*stringListPtr)->nextNode));
     }
 
-    free(*stringList);
-    *stringList = (struct stringListNode*)NULL;
+    free(*stringListPtr);
+    *stringListPtr = (struct stringListNode*)NULL;
 }
 
-void stringList_iter(struct stringListNode** stringList, void (*action)(char* str))
+void stringList_iter(struct stringListNode* stringList, void (*action)(char* str))
 {
-    struct stringListNode* currentNode = *stringList;
+    struct stringListNode* currentNode = stringList;
 
     while (currentNode != (struct stringListNode*)NULL)
     {
@@ -59,9 +59,9 @@ void stringList_iter(struct stringListNode** stringList, void (*action)(char* st
     }
 }
 
-void stringList_iteri(struct stringListNode** stringList, void (*action)(char* str, int i))
+void stringList_iteri(struct stringListNode* stringList, void (*action)(char* str, int i))
 {
-    struct stringListNode* currentNode = *stringList;
+    struct stringListNode* currentNode = stringList;
     int i = 0;
 
     while (currentNode != (struct stringListNode*)NULL)

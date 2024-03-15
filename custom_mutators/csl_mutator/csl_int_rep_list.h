@@ -12,8 +12,8 @@ struct cslMutatorIntRepListNode
 };
 
 struct cslMutatorIntRepListNode* cslMutatorIntRepList_init();
-void cslMutatorIntRepList_add(struct cslMutatorIntRepListNode** list, struct cslMutatorIntRep* contentToAdd);
-void cslMutatorIntRepList_free(struct cslMutatorIntRepListNode** list);
+void cslMutatorIntRepList_add(struct cslMutatorIntRepListNode** listPtr, struct cslMutatorIntRep* contentToAdd);
+void cslMutatorIntRepList_free(struct cslMutatorIntRepListNode** listPtr);
 struct cslMutatorIntRep* cslMutatorIntRepList_get(struct cslMutatorIntRepListNode* list, int i);
 
 #endif
