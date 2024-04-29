@@ -1,5 +1,5 @@
-#ifndef CSL_MUTATOR_H
-#define CSL_MUTATOR_H
+#ifndef WILDCARD_MUTATOR_H
+#define WILDCARD_MUTATOR_H
 
 #include "afl-fuzz.h"
 #include "string_list.h"
@@ -17,16 +17,16 @@
                                     type* b;            \
                                 }
 
-struct cslMutatorIntRep
+struct wildcardMutatorIntRep
 {
     struct stringListNode* baseInput;
 };
 
-struct cslMutator
+struct wildcardMutator
 {
     afl_state_t* afl;
 
-    struct cslMutatorIntRep* intRep;
+    struct wildcardMutatorIntRep* intRep;
 };
 
 #ifdef DEBUG
@@ -46,7 +46,7 @@ struct cslMutator
  *         There may be multiple instances of this mutator in one afl-fuzz run!
  *         Return NULL on error.
  */
-struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed);
+struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed);
 
 /*unsigned int afl_custom_fuzz_count(void *data, const unsigned char *buf, size_t buf_size);
 void afl_custom_splice_optout(void *data);*/
@@ -67,7 +67,7 @@ void afl_custom_splice_optout(void *data);*/
  *     produce data larger than max_size.
  * @return Size of the mutated output.
  */
-size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size);
+size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size);
 
 /*const char *afl_custom_describe(void *data, size_t max_description_len);
 size_t afl_custom_post_process(void *data, unsigned char *buf, size_t buf_size, unsigned char **out_buf);
@@ -86,7 +86,7 @@ const char* afl_custom_introspection(my_mutator_t *data);*/
  *
  * @param data The data ptr from afl_custom_init
  */
-void afl_custom_deinit(struct cslMutator* data);
+void afl_custom_deinit(struct wildcardMutator* data);
 
 #pragma endregion
 

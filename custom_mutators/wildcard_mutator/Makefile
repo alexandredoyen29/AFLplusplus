@@ -18,12 +18,12 @@ endif
 %.o: %.c
 	${CC} -c ${CC_OPTIONS} ${LD_OPTIONS} $^ -o $@
 
-csl_mutator: $(OBJ)
+wildcard_mutator: $(OBJ)
 	${CC} ${LD_OPTIONS} $^ -o $@${TARGET_EXT}
 
-all: $(csl_mutator)
+all: $(wildcard_mutator)
 
 clean:
 	rm -f *.o
-	rm -f csl_mutator
-	rm -f csl_mutator.so
+	rm -f wildcard_mutator
+	rm -f wildcard_mutator.so
