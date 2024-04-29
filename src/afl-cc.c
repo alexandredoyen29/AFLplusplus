@@ -17,6 +17,10 @@
 
 #define AFL_MAIN
 
+#ifndef _GNU_SOURCE
+  #define _GNU_SOURCE 1
+#endif
+
 #include "common.h"
 #include "config.h"
 #include "types.h"
@@ -32,7 +36,9 @@
 #include <limits.h>
 #include <assert.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #if (LLVM_MAJOR - 0 == 0)
   #undef LLVM_MAJOR
@@ -464,6 +470,8 @@ u8 *find_object(aflcc_state_t *aflcc, u8 *obj) {
             *slash = 0;
             tmp = alloc_printf("%s/%s", exepath, obj);
 
+            if (aflcc->debug) DEBUGF("Trying %s\n", tmp);
+
             if (!access(tmp, R_OK)) { return tmp; }
 
             ck_free(tmp);
@@ -518,7 +526,7 @@ void find_built_deps(aflcc_state_t *aflcc) {
   char *ptr = NULL;
 
 #if defined(__x86_64__)
-  if ((ptr = find_object(aflcc, "as")) != NULL) {
+  if ((ptr = find_object(aflcc, "afl-as")) != NULL) {
 
   #ifndef __APPLE__
     // on OSX clang masquerades as GCC
@@ -828,7 +836,8 @@ static void instrument_mode_old_environ(aflcc_state_t *aflcc) {
   }
 
   if (getenv("AFL_LLVM_CTX")) aflcc->instrument_opt_mode |= INSTRUMENT_OPT_CTX;
-  if (getenv("AFL_LLVM_CALLER"))
+  if (getenv("AFL_LLVM_CALLER") || getenv("AFL_LLVM_LTO_CALLER") ||
+      getenv("AFL_LLVM_LTO_CTX"))
     aflcc->instrument_opt_mode |= INSTRUMENT_OPT_CALLER;
 
   if (getenv("AFL_LLVM_NGRAM_SIZE")) {
@@ -1148,12 +1157,16 @@ static void instrument_opt_mode_exclude(aflcc_state_t *aflcc) {
 
   }
 
-  if (aflcc->instrument_opt_mode && aflcc->compiler_mode != LLVM)
+  if (aflcc->instrument_opt_mode && aflcc->compiler_mode != LLVM &&
+      !((aflcc->instrument_opt_mode & INSTRUMENT_OPT_CALLER) &&
+        aflcc->compiler_mode == LTO))
     FATAL("CTX, CALLER and NGRAM can only be used in LLVM mode");
 
   if (aflcc->instrument_opt_mode &&
       aflcc->instrument_opt_mode != INSTRUMENT_OPT_CODECOV &&
-      aflcc->instrument_mode != INSTRUMENT_CLASSIC)
+      aflcc->instrument_mode != INSTRUMENT_CLASSIC &&
+      !(aflcc->instrument_opt_mode & INSTRUMENT_OPT_CALLER &&
+        aflcc->compiler_mode == LTO))
     FATAL(
         "CALLER, CTX and NGRAM instrumentation options can only be used with "
         "the LLVM CLASSIC instrumentation mode.");
@@ -1256,12 +1269,7 @@ void mode_final_checkout(aflcc_state_t *aflcc, int argc, char **argv) {
         aflcc->instrument_mode == INSTRUMENT_PCGUARD) {
 
       aflcc->lto_mode = 1;
-      // force CFG
-      // if (!aflcc->instrument_mode) {
-
       aflcc->instrument_mode = INSTRUMENT_PCGUARD;
-
-      // }
 
     } else if (aflcc->instrument_mode == INSTRUMENT_CLASSIC) {
 
@@ -1363,6 +1371,13 @@ void mode_final_checkout(aflcc_state_t *aflcc, int argc, char **argv) {
     setenv("AFL_LLVM_LAF_TRANSFORM_COMPARES", "1", 1);
 
   }
+
+  if (getenv("AFL_LLVM_DICT2FILE") &&
+      (getenv("AFL_LLVM_LAF_SPLIT_SWITCHES") ||
+       getenv("AFL_LLVM_LAF_SPLIT_COMPARES") ||
+       getenv("AFL_LLVM_LAF_SPLIT_FLOATS") ||
+       getenv("AFL_LLVM_LAF_TRANSFORM_COMPARES")))
+    FATAL("AFL_LLVM_DICT2FILE is incompatible with AFL_LLVM_LAF_*");
 
   aflcc->cmplog_mode = getenv("AFL_CMPLOG") || getenv("AFL_LLVM_CMPLOG") ||
                        getenv("AFL_GCC_CMPLOG");
@@ -1571,8 +1586,10 @@ void add_defs_persistent_mode(aflcc_state_t *aflcc) {
   insert_param(aflcc,
                "-D__AFL_FUZZ_INIT()="
                "int __afl_sharedmem_fuzzing = 1;"
-               "extern unsigned int *__afl_fuzz_len;"
-               "extern unsigned char *__afl_fuzz_ptr;"
+               "extern __attribute__((visibility(\"default\"))) "
+               "unsigned int *__afl_fuzz_len;"
+               "extern __attribute__((visibility(\"default\"))) "
+               "unsigned char *__afl_fuzz_ptr;"
                "unsigned char __afl_fuzz_alt[1048576];"
                "unsigned char *__afl_fuzz_alt_ptr = __afl_fuzz_alt;");
 
@@ -2375,7 +2392,11 @@ void add_runtime(aflcc_state_t *aflcc) {
     if (aflcc->plusplus_mode && strlen(libdir) && strncmp(libdir, "/usr", 4) &&
         strncmp(libdir, "/lib", 4)) {
 
+#ifdef __APPLE__
+      u8 *libdir_opt = strdup("-Wl,-rpath," LLVM_LIBDIR);
+#else
       u8 *libdir_opt = strdup("-Wl,-rpath=" LLVM_LIBDIR);
+#endif
       insert_param(aflcc, libdir_opt);
 
     }
@@ -2457,12 +2478,59 @@ void add_runtime(aflcc_state_t *aflcc) {
 */
 void add_assembler(aflcc_state_t *aflcc) {
 
-  u8 *afl_as = find_object(aflcc, "as");
+  u8 *afl_as = find_object(aflcc, "afl-as");
 
-  if (!afl_as) FATAL("Cannot find 'as' (symlink to 'afl-as').");
+  if (!afl_as) FATAL("Cannot find 'afl-as'.");
 
   u8 *slash = strrchr(afl_as, '/');
   if (slash) *slash = 0;
+
+    // Search for 'as' may be unreliable in some cases (see #2058)
+    // so use 'afl-as' instead, because 'as' is usually a symbolic link,
+    // or can be a renamed copy of 'afl-as' created in the same dir.
+    // Now we should verify if the compiler can find the 'as' we need.
+
+#define AFL_AS_ERR "(should be a symlink or copy of 'afl-as')"
+
+  u8 *afl_as_dup = alloc_printf("%s/as", afl_as);
+
+  int fd = open(afl_as_dup, O_RDONLY);
+  if (fd < 0) { PFATAL("Unable to open '%s' " AFL_AS_ERR, afl_as_dup); }
+
+  struct stat st;
+  if (fstat(fd, &st) < 0) {
+
+    PFATAL("Unable to fstat '%s' " AFL_AS_ERR, afl_as_dup);
+
+  }
+
+  u32 f_len = st.st_size;
+
+  u8 *f_data = mmap(0, f_len, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (f_data == MAP_FAILED) {
+
+    PFATAL("Unable to mmap file '%s' " AFL_AS_ERR, afl_as_dup);
+
+  }
+
+  close(fd);
+
+  // "AFL_AS" is a const str passed to getenv in afl-as.c
+  if (!memmem(f_data, f_len, "AFL_AS", strlen("AFL_AS") + 1)) {
+
+    FATAL(
+        "Looks like '%s' is not a valid symlink or copy of '%s/afl-as'. "
+        "It is a prerequisite to override system-wide 'as' for "
+        "instrumentation.",
+        afl_as_dup, afl_as);
+
+  }
+
+  if (munmap(f_data, f_len)) { PFATAL("unmap() failed"); }
+
+  ck_free(afl_as_dup);
+
+#undef AFL_AS_ERR
 
   insert_param(aflcc, "-B");
   insert_param(aflcc, afl_as);
@@ -2917,11 +2985,12 @@ static void maybe_usage(aflcc_state_t *aflcc, int argc, char **argv) {
             "  AFL_LLVM_DOCUMENT_IDS: write all edge IDs and the corresponding "
             "functions\n"
             "    into this file (LTO mode)\n"
+            "  AFL_LLVM_LTO_CALLER: activate CALLER/CTX instrumentation\n"
+            "  AFL_LLVM_LTO_CALLER_DEPTH: skip how many empty functions\n"
             "  AFL_LLVM_LTO_DONTWRITEID: don't write the highest ID used to a "
             "global var\n"
             "  AFL_LLVM_LTO_STARTID: from which ID to start counting from for "
-            "a "
-            "bb\n"
+            "a bb\n"
             "  AFL_REAL_LD: use this lld linker instead of the compiled in "
             "path\n"
             "  AFL_LLVM_LTO_SKIPINIT: don't inject initialization code "

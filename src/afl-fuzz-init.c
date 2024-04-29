@@ -5,7 +5,7 @@
    Originally written by Michal Zalewski
 
    Now maintained by Marc Heuse <mh@mh-sec.de>,
-                        Heiko Eißfeldt <heiko.eissfeldt@hexco.de> and
+                        Heiko Eissfeldt <heiko.eissfeldt@hexco.de> and
                         Andrea Fioraldi <andreafioraldi@gmail.com>
 
    Copyright 2016, 2017 Google Inc. All rights reserved.
@@ -458,6 +458,24 @@ void bind_to_free_cpu(afl_state_t *afl) {
 }
 
 #endif                                                     /* HAVE_AFFINITY */
+
+/* transforms spaces in a string to underscores (inplace) */
+
+static void no_spaces(u8 *string) {
+
+  if (string) {
+
+    u8 *ptr = string;
+    while (*ptr != 0) {
+
+      if (*ptr == ' ') { *ptr = '_'; }
+      ++ptr;
+
+    }
+
+  }
+
+}
 
 /* Shuffle an array of pointers. Might be slightly biased. */
 
@@ -914,6 +932,11 @@ void perform_dry_run(afl_state_t *afl) {
 
     res = calibrate_case(afl, q, use_mem, 0, 1);
 
+    /* For AFLFast schedules we update the queue entry */
+    if (unlikely(afl->schedule >= FAST && afl->schedule <= RARE) && likely(q->exec_cksum)) {
+      q->n_fuzz_entry = q->exec_cksum % N_FUZZ_SIZE;
+    }
+     
     if (afl->stop_soon) { return; }
 
     if (res == afl->crash_mode || res == FSRV_RUN_NOBITS) {
@@ -1157,18 +1180,22 @@ void perform_dry_run(afl_state_t *afl) {
 
 #ifndef SIMPLE_FILES
 
-          snprintf(crash_fn, PATH_MAX, "%s/crashes/id:%06llu,sig:%02u,%s%s",
-                   afl->out_dir, afl->saved_crashes, afl->fsrv.last_kill_signal,
-                   describe_op(afl, 0,
-                               NAME_MAX - strlen("id:000000,sig:00,") -
-                                   strlen(use_name)),
-                   use_name);
+          snprintf(
+              crash_fn, PATH_MAX, "%s/crashes/id:%06llu,sig:%02u,%s%s%s%s",
+              afl->out_dir, afl->saved_crashes, afl->fsrv.last_kill_signal,
+              describe_op(
+                  afl, 0,
+                  NAME_MAX - strlen("id:000000,sig:00,") - strlen(use_name)),
+              use_name, afl->file_extension ? "." : "",
+              afl->file_extension ? (const char *)afl->file_extension : "");
 
 #else
 
-          snprintf(crash_fn, PATH_MAX, "%s/crashes/id_%06llu_%02u",
-                   afl->out_dir, afl->saved_crashes,
-                   afl->fsrv.last_kill_signal);
+          snprintf(
+              crash_fn, PATH_MAX, "%s/crashes/id_%06llu_%02u%s%s", afl->out_dir,
+              afl->saved_crashes, afl->fsrv.last_kill_signal,
+              afl->file_extension ? "." : "",
+              afl->file_extension ? (const char *)afl->file_extension : "");
 
 #endif
 
@@ -1372,10 +1399,10 @@ void perform_dry_run(afl_state_t *afl) {
 static void link_or_copy(u8 *old_path, u8 *new_path) {
 
   s32 i = link(old_path, new_path);
+  if (!i) { return; }
+
   s32 sfd, dfd;
   u8 *tmp;
-
-  if (!i) { return; }
 
   sfd = open(old_path, O_RDONLY);
   if (sfd < 0) { PFATAL("Unable to open '%s'", old_path); }
@@ -1439,7 +1466,9 @@ void pivot_inputs(afl_state_t *afl) {
       u32 src_id;
 
       afl->resuming_fuzz = 1;
-      nfn = alloc_printf("%s/queue/%s", afl->out_dir, rsl);
+      nfn = alloc_printf(
+          "%s/queue/%s%s%s", afl->out_dir, rsl, afl->file_extension ? "." : "",
+          afl->file_extension ? (const char *)afl->file_extension : "");
 
       /* Since we're at it, let's also get the parent and figure out the
          appropriate depth for this entry. */
@@ -1479,12 +1508,20 @@ void pivot_inputs(afl_state_t *afl) {
 
       }
 
-      nfn = alloc_printf("%s/queue/id:%06u,time:0,execs:%llu,orig:%s",
-                         afl->out_dir, id, afl->fsrv.total_execs, use_name);
+      nfn = alloc_printf(
+          "%s/queue/id:%06u,time:0,execs:%llu,orig:%s%s%s", afl->out_dir, id,
+          afl->fsrv.total_execs, use_name, afl->file_extension ? "." : "",
+          afl->file_extension ? (const char *)afl->file_extension : "");
+
+      u8 *pos = strrchr(nfn, '/');
+      no_spaces(pos + 30);
 
 #else
 
-      nfn = alloc_printf("%s/queue/id_%06u", afl->out_dir, id);
+      nfn = alloc_printf(
+          "%s/queue/id_%06u%s%s", afl->out_dir, id,
+          afl->file_extension ? "." : "",
+          afl->file_extension ? (const char *)afl->file_extension : "");
 
 #endif                                                    /* ^!SIMPLE_FILES */
 
@@ -1921,6 +1958,9 @@ static void handle_existing_out_dir(afl_state_t *afl) {
 
   }
 
+#ifdef AFL_PERSISTENT_RECORD
+  delete_files(fn, RECORD_PREFIX);
+#endif
   if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
   ck_free(fn);
 
@@ -1953,6 +1993,9 @@ static void handle_existing_out_dir(afl_state_t *afl) {
 
   }
 
+#ifdef AFL_PERSISTENT_RECORD
+  delete_files(fn, RECORD_PREFIX);
+#endif
   if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
   ck_free(fn);
 
