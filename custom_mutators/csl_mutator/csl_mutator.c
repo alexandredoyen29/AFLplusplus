@@ -2,6 +2,30 @@
 
 #pragma region Mutator internals
 
+static char* readCsl(char* varEnv)
+{
+    char* cslFilePath = getenv(varEnv);
+    char* result = malloc(CSL_BUFFER_SIZE * sizeof(char));
+    int fdCslFilePath;
+
+    assert(result != (char*)NULL);
+
+    if (cslFilePath == (char*)NULL)
+    {
+        perror("CSL file not found");
+    }
+    else
+    {
+        fdCslFilePath = open(cslFilePath, O_RDONLY);
+
+        read(fdCslFilePath, result, CSL_BUFFER_SIZE * sizeof(char));
+
+        close(fdCslFilePath);
+    }
+
+    return result;
+}
+
 static struct cslMutatorIntRep* parseCsl(char* cslContent)
 {
     struct cslMutatorIntRep* result = malloc(sizeof(struct cslMutatorIntRep));
@@ -78,11 +102,6 @@ static char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t max
     return generatedInput;
 }
 
-static void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
-{
-    stringList_free(&(target->baseInput));
-}
-
 #pragma endregion
 
 #ifdef DEBUG
@@ -106,15 +125,9 @@ static void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
     {
         struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
         char* cslTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
-        struct cslMutatorIntRepListNode* mutatorIntRepList = cslMutatorIntRepList_init();
         struct cslMutatorIntRep* cslTestIntRep = parseCsl(cslTest);
 
-        mutator->cslMutatorsList = mutatorIntRepList;
-
-        cslMutatorIntRepList_add(&mutatorIntRepList, cslTestIntRep);
-
-        //stringList_iteri(&(cslTestIntRep->baseInput), printStri);
-        //stringList_iteri(cslMutatorIntRepList_get(mutator, 0)->baseInput, printStri);
+        mutator->intRep = cslTestIntRep;
 
         srand(5);
 
@@ -134,14 +147,19 @@ static void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
 struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct cslMutator* mutator = malloc(sizeof(struct cslMutator));
+    char* csl = readCsl(ENV_CSL_FILE_PATH);
 
     assert(mutator != (struct cslMutator*)NULL);
+    assert(csl != (char*)NULL);
 
     srand(seed);    // Random initialization
 
-    mutator->currentMutationId = 0;
-    mutator->cslMutatorsList = cslMutatorIntRepList_init();
     mutator->afl = afl;
+    mutator->intRep = parseCsl(csl);
+
+    free(csl);
+
+    OKF("CSL Mutator ready !\n");
 
     return mutator;
 }
@@ -149,15 +167,10 @@ struct cslMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
     char* mutatedInput;
-    int currentMutationId;
     size_t mutatedInputLength;
 
-    cslMutatorIntRepList_add(&(data->cslMutatorsList), parseCsl((char*)buf));
-    currentMutationId = data->currentMutationId;
-    data->currentMutationId++;
-
     // Mutate function call to add here
-    mutatedInput = generateMutatedInput(cslMutatorIntRepList_get(data->cslMutatorsList, currentMutationId), max_size);
+    mutatedInput = generateMutatedInput(data->intRep, max_size);
 
     *out_buf = (unsigned char*)mutatedInput;
     mutatedInputLength = strlen(mutatedInput);
@@ -167,11 +180,7 @@ size_t afl_custom_fuzz(struct cslMutator* data, unsigned char *buf, size_t buf_s
 
 void afl_custom_deinit(struct cslMutator* data)
 {
-    struct cslMutatorIntRepListNode* mutatorIntRepList = data->cslMutatorsList;
-
-    cslMutatorIntRepList_iter(mutatorIntRepList, cslMutatorIntRep_free);
-    cslMutatorIntRepList_free(&(data->cslMutatorsList));
-
+    free(data->intRep);
     free(data);
 }
 

@@ -3,7 +3,6 @@
 
 #include "afl-fuzz.h"
 #include "string_list.h"
-#include "csl_int_rep_list.h"
 #include "config.h"
 #include "utils.h"
 
@@ -27,8 +26,7 @@ struct cslMutator
 {
     afl_state_t* afl;
 
-    int currentMutationId;
-    struct cslMutatorIntRepListNode* cslMutatorsList;
+    struct cslMutatorIntRep* intRep;
 };
 
 #ifdef DEBUG
