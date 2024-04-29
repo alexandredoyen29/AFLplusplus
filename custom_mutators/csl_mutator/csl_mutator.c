@@ -1,6 +1,8 @@
 #include "csl_mutator.h"
 
-struct cslMutatorIntRep* parseCsl(char* cslContent)
+#pragma region Mutator internals
+
+static struct cslMutatorIntRep* parseCsl(char* cslContent)
 {
     struct cslMutatorIntRep* result = malloc(sizeof(struct cslMutatorIntRep));
     char* cslContentPart = malloc(strlen(cslContent));
@@ -28,7 +30,7 @@ struct cslMutatorIntRep* parseCsl(char* cslContent)
     return result;
 }
 
-char* generateRandomString()
+static char* generateRandomString()
 {
     char* alphabet = MUTATION_ALPHABET;
     size_t size = (size_t)rand() % MAX_RANDOM_STRING_SIZE;
@@ -46,7 +48,7 @@ char* generateRandomString()
     return result;
 }
 
-char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
+static char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
 {
     size_t generatedInputSize = min(maxSize, MAX_STRING_SIZE);
     char* generatedInput = calloc(generatedInputSize, sizeof(char));   // The memory is set to 0
@@ -76,10 +78,12 @@ char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize)
     return generatedInput;
 }
 
-void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
+static void cslMutatorIntRep_free(struct cslMutatorIntRep* target)
 {
     stringList_free(&(target->baseInput));
 }
+
+#pragma endregion
 
 #ifdef DEBUG
     // DEBUG

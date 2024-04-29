@@ -31,12 +31,6 @@ struct cslMutator
     struct cslMutatorIntRepListNode* cslMutatorsList;
 };
 
-// Mutator's internals
-struct cslMutatorIntRep* parseCsl(char* cslContent);
-char* generateRandomString();
-char* generateMutatedInput(struct cslMutatorIntRep* parsedCSL, size_t maxSize);
-void cslMutatorIntRep_free(struct cslMutatorIntRep* target);
-
 #ifdef DEBUG
     // DEBUG
     void stringList_printStringList(struct stringListNode* stringList);
