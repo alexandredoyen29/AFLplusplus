@@ -176,16 +176,14 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
 size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
-    char* mutatedInput;
-    size_t mutatedInputLength = 0;
-
-    /*memcpy(data->mutatedOutBuffer, buf, buf_size);
+    size_t mutatedInputLength;
 
     // Mutate function call to add here
-    mutatedInput = generateMutatedInput(data->intRep, max_size);
+    strReset(data->mutatedOutBuffer, data->mutatedOutBufferSize);
+    generateMutatedInput(data->intRep, (char*)buf, data->mutatedOutBuffer, max_size);
+    mutatedInputLength = strlen(data->mutatedOutBuffer);
 
-    *out_buf = (unsigned char*)mutatedInput;
-    mutatedInputLength = strlen(mutatedInput);*/
+    *out_buf = (unsigned char*)(data->mutatedOutBuffer);
 
     return mutatedInputLength;
 }
