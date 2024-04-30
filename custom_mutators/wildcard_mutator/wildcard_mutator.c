@@ -54,24 +54,6 @@ static struct wildcardMutatorIntRep* parseWildcard(char* wildcardContent)
     return result;
 }
 
-static char* generateRandomString()
-{
-    char* alphabet = MUTATION_ALPHABET;
-    size_t size = (size_t)rand() % MAX_RANDOM_STRING_SIZE;
-    size_t sizeofAlphabet = strlen(alphabet);
-    int i = 0;
-    char* result = malloc((size + 1) * sizeof(char));
-
-    assert(result != (char*)NULL);
-    
-    for (i = 0; i < size; ++i)
-    {
-        result[i] = alphabet[rand() % sizeofAlphabet];
-    }
-
-    return result;
-}
-
 static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, char* wildcardReplacement, char* outBuffer, size_t outBufferSize)
 {
     struct stringListNode* parsedWildcardStaticData = parsedWildcard->baseInput;
