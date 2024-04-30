@@ -72,34 +72,30 @@ static char* generateRandomString()
     return result;
 }
 
-static char* generateMutatedInput(struct wildcardMutatorIntRep* parsedWILDCARD, size_t maxSize)
+static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, char* wildcardReplacement, char* outBuffer, size_t outBufferSize)
 {
-    size_t generatedInputSize = min(maxSize, MAX_STRING_SIZE);
-    char* generatedInput = calloc(generatedInputSize, sizeof(char));   // The memory is set to 0
-    struct stringListNode* parsedWILDCARDStaticData = parsedWILDCARD->baseInput;
-    size_t generatedInputLength = 0;
-    size_t generatedInputOldLength = 0;
-    size_t generatedInputRemainingSpace = generatedInputSize - 1;   // Trailing '\0'
+    struct stringListNode* parsedWildcardStaticData = parsedWildcard->baseInput;
+    size_t outBufferLength = 0;
+    size_t outBufferOldLength = 0;
+    size_t outBufferRemainingSpace = outBufferSize - 1;   // Trailing '\0'
 
-    assert(generatedInput != (char*)NULL);
+    outBuffer[0] = '\0';    // Resetting the out buffer
 
-    while ((stringList_hasNext(parsedWILDCARDStaticData) == true) && (generatedInputRemainingSpace > 0))
+    while ((stringList_hasNext(parsedWildcardStaticData) == true) && (outBufferRemainingSpace > 0))
     {
-        strConcat(generatedInput, stringList_next(&parsedWILDCARDStaticData), generatedInputSize - 1);
-        generatedInputLength += (strnlen(generatedInput, generatedInputSize) - generatedInputOldLength);
-        generatedInputRemainingSpace -= generatedInputLength;
-        generatedInputOldLength = generatedInputLength;
+        strConcat(outBuffer, stringList_next(&parsedWildcardStaticData), outBufferSize - 1);
+        outBufferLength += (strnlen(outBuffer, outBufferSize) - outBufferOldLength);
+        outBufferRemainingSpace -= outBufferLength;
+        outBufferOldLength = outBufferLength;
 
-        if ((stringList_hasNext(parsedWILDCARDStaticData) == true) && (generatedInputRemainingSpace > 0))
+        if ((stringList_hasNext(parsedWildcardStaticData) == true) && (outBufferRemainingSpace > 0))
         {
-            strConcat(generatedInput, generateRandomString(), generatedInputSize - 1);
-            generatedInputLength += (strnlen(generatedInput, generatedInputSize) - generatedInputOldLength);
-            generatedInputRemainingSpace -= generatedInputLength;
-            generatedInputOldLength = generatedInputLength;
+            strConcat(outBuffer, wildcardReplacement, outBufferSize - 1);
+            outBufferLength += (strnlen(outBuffer, outBufferSize) - outBufferOldLength);
+            outBufferRemainingSpace -= outBufferLength;
+            outBufferOldLength = outBufferLength;
         }
     }
-
-    return generatedInput;
 }
 
 #pragma endregion
@@ -128,13 +124,22 @@ static char* generateMutatedInput(struct wildcardMutatorIntRep* parsedWILDCARD, 
         struct wildcardMutatorIntRep* wildcardTestIntRep = parseWildcard(wildcardTest);
 
         mutator->intRep = wildcardTestIntRep;
+        mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
+        mutator->mutatedOutBuffer = malloc(mutator->mutatedOutBufferSize * sizeof(char));
 
         srand(5);
 
-        printf("%s\n", generateMutatedInput(wildcardTestIntRep, MAX_STRING_SIZE));
-        printf("%s\n", generateMutatedInput(wildcardTestIntRep, MAX_STRING_SIZE));
-        printf("%s\n", generateMutatedInput(wildcardTestIntRep, MAX_STRING_SIZE));
-        printf("%s\n", generateMutatedInput(wildcardTestIntRep, MAX_STRING_SIZE));
+        generateMutatedInput(wildcardTestIntRep, "toto", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
+        printf("--\n%s\n", mutator->mutatedOutBuffer);
+
+        generateMutatedInput(wildcardTestIntRep, "titi", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
+        printf("--\n%s\n", mutator->mutatedOutBuffer);
+
+        generateMutatedInput(wildcardTestIntRep, "tutu", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
+        printf("--\n%s\n", mutator->mutatedOutBuffer);
+
+        generateMutatedInput(wildcardTestIntRep, "tata", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
+        printf("--\n%s\n", mutator->mutatedOutBuffer);
 
         afl_custom_deinit(mutator);
 
@@ -146,7 +151,7 @@ static char* generateMutatedInput(struct wildcardMutatorIntRep* parsedWILDCARD, 
 
 struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
-    struct wildcardMutator* mutator = malloc(sizeof(struct wildcardMutator));
+    struct wildcardMutator* mutator = (struct wildcardMutator*)malloc(sizeof(struct wildcardMutator));
     char* wildcard = readWildcard(ENV_WILDCARD_FILE_PATH);
 
     assert(mutator != (struct wildcardMutator*)NULL);
@@ -156,10 +161,14 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     mutator->afl = afl;
     mutator->intRep = parseWildcard(wildcard);
+    mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
+    mutator->mutatedOutBuffer = (char*)malloc(mutator->mutatedOutBufferSize * sizeof(char));
+
+    assert(mutator->mutatedOutBuffer != (char*)NULL);
 
     free(wildcard);
 
-    OKF("WILDCARD Mutator ready !\n");
+    OKF("WILDCARD Mutator ready !");
 
     return mutator;
 }
@@ -167,13 +176,15 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
     char* mutatedInput;
-    size_t mutatedInputLength;
+    size_t mutatedInputLength = 0;
+
+    /*memcpy(data->mutatedOutBuffer, buf, buf_size);
 
     // Mutate function call to add here
     mutatedInput = generateMutatedInput(data->intRep, max_size);
 
     *out_buf = (unsigned char*)mutatedInput;
-    mutatedInputLength = strlen(mutatedInput);
+    mutatedInputLength = strlen(mutatedInput);*/
 
     return mutatedInputLength;
 }
@@ -181,6 +192,7 @@ size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t 
 void afl_custom_deinit(struct wildcardMutator* data)
 {
     free(data->intRep);
+    free(data->mutatedOutBuffer);
     free(data);
 }
 

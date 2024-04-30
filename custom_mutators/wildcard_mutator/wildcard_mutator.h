@@ -25,6 +25,8 @@ struct wildcardMutatorIntRep
 struct wildcardMutator
 {
     afl_state_t* afl;
+    char* mutatedOutBuffer;
+    size_t mutatedOutBufferSize;
 
     struct wildcardMutatorIntRep* intRep;
 };
