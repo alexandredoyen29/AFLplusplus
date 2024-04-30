@@ -88,7 +88,7 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
         outBufferRemainingSpace -= outBufferLength;
         outBufferOldLength = outBufferLength;
 
-        if ((stringList_hasNext(parsedWildcardStaticData) == true) && (outBufferRemainingSpace > 0))
+        if (outBufferRemainingSpace > 0)
         {
             strConcat(outBuffer, wildcardReplacement, outBufferSize - 1);
             outBufferLength += (strnlen(outBuffer, outBufferSize) - outBufferOldLength);
@@ -120,12 +120,12 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
     int main()
     {
         struct wildcardMutator* mutator = malloc(sizeof(struct wildcardMutator));
-        char* wildcardTest = "USER *\nUSER *\nPASSWD\nCWD *\nLS";
+        char* wildcardTest = "a *; b *";
         struct wildcardMutatorIntRep* wildcardTestIntRep = parseWildcard(wildcardTest);
 
         mutator->intRep = wildcardTestIntRep;
         mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
-        mutator->mutatedOutBuffer = malloc(mutator->mutatedOutBufferSize * sizeof(char));
+        mutator->mutatedOutBuffer = calloc(mutator->mutatedOutBufferSize, sizeof(char));
 
         srand(5);
 
@@ -162,7 +162,7 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
     mutator->afl = afl;
     mutator->intRep = parseWildcard(wildcard);
     mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
-    mutator->mutatedOutBuffer = (char*)malloc(mutator->mutatedOutBufferSize * sizeof(char));
+    mutator->mutatedOutBuffer = (char*)calloc(mutator->mutatedOutBufferSize, sizeof(char));
 
     assert(mutator->mutatedOutBuffer != (char*)NULL);
 

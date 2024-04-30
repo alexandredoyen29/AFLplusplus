@@ -18,8 +18,8 @@ size_t min(size_t a, size_t b)
 
 void strConcat(char* dst, char* src, size_t len)
 {
-    size_t srcLen = strlen(src);
-    size_t dstLen = strlen(dst);
+    size_t srcLen = strnlen(src, len);
+    size_t dstLen = strnlen(dst, len);
     int i = 0;
 
     while ((i < srcLen) && ((dstLen + i) < (len - 1)))

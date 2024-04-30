@@ -89,7 +89,7 @@ void stringList_iterd(struct stringListNode* stringList, void (*action)(char* st
 
 bool stringList_hasNext(struct stringListNode* stringList)
 {
-    return (stringList->nextNode != (struct stringListNode*)NULL);
+    return (stringList != (struct stringListNode*)NULL);
 }
 
 char* stringList_next(struct stringListNode** stringListPtr)
