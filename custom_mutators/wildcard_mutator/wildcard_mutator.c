@@ -41,7 +41,7 @@ static struct wildcardMutatorIntRep* parseWildcard(char* wildcardContent)
     strtok(wildcardContentPart, "*");
     stringList_add(&(result->baseInput), wildcardContentPart);
 
-    while ((wildcardContentPart != (char*)NULL) && (wildcardContentPart != NULL))
+    while (wildcardContentPart != (char*)NULL)
     {
         wildcardContentPart = strtok((char*)NULL, "*");
 
@@ -79,8 +79,6 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
     size_t outBufferOldLength = 0;
     size_t outBufferRemainingSpace = outBufferSize - 1;   // Trailing '\0'
 
-    outBuffer[0] = '\0';    // Resetting the out buffer
-
     while ((stringList_hasNext(parsedWildcardStaticData) == true) && (outBufferRemainingSpace > 0))
     {
         strConcat(outBuffer, stringList_next(&parsedWildcardStaticData), outBufferSize - 1);
@@ -88,7 +86,7 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
         outBufferRemainingSpace -= outBufferLength;
         outBufferOldLength = outBufferLength;
 
-        if (outBufferRemainingSpace > 0)
+        if ((stringList_hasNext(parsedWildcardStaticData) == true) && (outBufferRemainingSpace > 0))
         {
             strConcat(outBuffer, wildcardReplacement, outBufferSize - 1);
             outBufferLength += (strnlen(outBuffer, outBufferSize) - outBufferOldLength);
@@ -120,7 +118,7 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
     int main()
     {
         struct wildcardMutator* mutator = malloc(sizeof(struct wildcardMutator));
-        char* wildcardTest = "a *; b *";
+        char* wildcardTest = "a *; b *; quit";
         struct wildcardMutatorIntRep* wildcardTestIntRep = parseWildcard(wildcardTest);
 
         mutator->intRep = wildcardTestIntRep;
@@ -132,12 +130,15 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
         generateMutatedInput(wildcardTestIntRep, "toto", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         printf("--\n%s\n", mutator->mutatedOutBuffer);
 
+        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         generateMutatedInput(wildcardTestIntRep, "titi", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         printf("--\n%s\n", mutator->mutatedOutBuffer);
 
+        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         generateMutatedInput(wildcardTestIntRep, "tutu", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         printf("--\n%s\n", mutator->mutatedOutBuffer);
 
+        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         generateMutatedInput(wildcardTestIntRep, "tata", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
         printf("--\n%s\n", mutator->mutatedOutBuffer);
 

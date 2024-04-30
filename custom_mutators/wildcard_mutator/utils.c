@@ -28,3 +28,13 @@ void strConcat(char* dst, char* src, size_t len)
         i++;
     }
 }
+
+void strReset(char* str, size_t len)
+{
+    size_t i;
+
+    for (i = 0; i < len; ++i)
+    {
+        str[i] = '\0';
+    }
+}
