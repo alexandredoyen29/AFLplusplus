@@ -167,6 +167,8 @@ size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t 
 
     *out_buf = (unsigned char*)(data->mutatedOutBuffer);
 
+    DEBUGF("%s", *out_buf);
+
     return mutatedInputLength;
 }
 
