@@ -146,11 +146,11 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     if (rawDebugFlag == NULL)
     {
-        debugFlag = true;
+        debugFlag = false;
     }
     else
     {
-        debugFlag = false;
+        debugFlag = true;
     }
 
     mutator->afl = afl;
