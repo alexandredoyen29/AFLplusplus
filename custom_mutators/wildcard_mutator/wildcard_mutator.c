@@ -136,16 +136,28 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct wildcardMutator* mutator = (struct wildcardMutator*)malloc(sizeof(struct wildcardMutator));
     char* wildcard = readWildcard(ENV_WILDCARD_FILE_PATH);
+    char* rawDebugFlag = getenv(ENV_WILDCARD_DEBUG_MODE);
+    bool debugFlag;
 
     assert(mutator != (struct wildcardMutator*)NULL);
     assert(wildcard != (char*)NULL);
 
     srand(seed);    // Random initialization
 
+    if (rawDebugFlag == NULL)
+    {
+        debugFlag = true;
+    }
+    else
+    {
+        debugFlag = false;
+    }
+
     mutator->afl = afl;
     mutator->intRep = parseWildcard(wildcard);
     mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
     mutator->mutatedOutBuffer = (char*)calloc(mutator->mutatedOutBufferSize, sizeof(char));
+    mutator->debug = debugFlag;
 
     assert(mutator->mutatedOutBuffer != (char*)NULL);
 
@@ -167,7 +179,10 @@ size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t 
 
     *out_buf = (unsigned char*)(data->mutatedOutBuffer);
 
-    DEBUGF("%s", *out_buf);
+    if (data->debug == true)
+    {
+        DEBUGF("%s", *out_buf);
+    }
 
     return mutatedInputLength;
 }

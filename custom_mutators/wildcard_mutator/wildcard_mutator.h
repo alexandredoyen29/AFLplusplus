@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #define DEFINE_TUPLE_PTR(type)  struct tuple_ptr_##type \
                                 {                       \
@@ -27,6 +28,7 @@ struct wildcardMutator
     afl_state_t* afl;
     char* mutatedOutBuffer;
     size_t mutatedOutBufferSize;
+    bool debug;
 
     struct wildcardMutatorIntRep* intRep;
 };
