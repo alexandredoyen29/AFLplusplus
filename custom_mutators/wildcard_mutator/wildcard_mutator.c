@@ -26,13 +26,15 @@ static char* readWildcard(char* wildcardFileName)
     return result;
 }
 
-static struct stringListNode* readWildcardsFilenames(char* wildcardsDir)
+static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
 {
     struct dirent* dirElement;
     struct stringListNode* result = stringList_init();
     char* str;
+    DIR* dirCursor;
+    char* wildcardsDir = getenv(wildcardsDirEnvVar);
 
-    DIR* dirCursor = opendir(wildcardsDir);
+    dirCursor = opendir(wildcardsDir);
 
     if (dirCursor != (DIR*)NULL)
     {
