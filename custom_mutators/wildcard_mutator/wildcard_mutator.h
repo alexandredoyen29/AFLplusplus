@@ -5,12 +5,15 @@
 #include "string_list.h"
 #include "config.h"
 #include "utils.h"
+#include "wildcard_mutator_int_rep_list.h"
 
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #define DEFINE_TUPLE_PTR(type)  struct tuple_ptr_##type \
                                 {                       \
@@ -30,7 +33,7 @@ struct wildcardMutator
     size_t mutatedOutBufferSize;
     bool debug;
 
-    struct wildcardMutatorIntRep* intRep;
+    struct wildcardMutatorIntRepListNode* intRepList;
 };
 
 #ifdef DEBUG

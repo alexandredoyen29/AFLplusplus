@@ -2,9 +2,9 @@
 
 #pragma region Mutator internals
 
-static char* readWildcard(char* varEnv)
+static char* readWildcard(char* wildcardFileName)
 {
-    char* wildcardFilePath = getenv(varEnv);
+    char* wildcardFilePath = getenv(wildcardFileName);
     char* result = malloc(WILDCARD_FILE_READ_BUFFER_SIZE * sizeof(char));
     int fdWildcardFilePath;
 
@@ -12,7 +12,7 @@ static char* readWildcard(char* varEnv)
 
     if (wildcardFilePath == (char*)NULL)
     {
-        perror("WILDCARD file not found");
+        perror("[readWildcard()] -> WILDCARD file not found");
     }
     else
     {
@@ -21,6 +21,34 @@ static char* readWildcard(char* varEnv)
         read(fdWildcardFilePath, result, WILDCARD_FILE_READ_BUFFER_SIZE * sizeof(char));
 
         close(fdWildcardFilePath);
+    }
+
+    return result;
+}
+
+static struct stringListNode* readWildcardsFilenames(char* wildcardsDir)
+{
+    struct dirent* dirElement;
+    struct stringListNode* result = stringList_init();
+    char* str;
+
+    DIR* dirCursor = opendir(wildcardsDir);
+
+    if (dirCursor != (DIR*)NULL)
+    {
+        do
+        {
+            dirElement = readdir(dirCursor);
+
+            str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
+
+            strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
+            stringList_add(&result, str);
+        } while (dirCursor != (DIR*)NULL);
+    }
+    else
+    {
+        perror("[readWildcard()] -> Error when reading wildcard dir");
     }
 
     return result;
@@ -78,6 +106,37 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
     }
 }
 
+static void freeIntRep(struct wildcardMutatorIntRep* intRep)
+{
+    free(intRep);
+}
+
+static void addWildcardMutatorIntRepToIntRepsFromFilename(char* wildcard, void* intRepList)
+{
+    struct wildcardMutatorIntRepListNode** intRepListConverted = (struct wildcardMutatorIntRepListNode**)intRepList;
+
+    wildcardMutatorIntRepList_add(intRepListConverted, parseWildcard(wildcard));
+}
+
+static void freeString(char* string)
+{
+    free(string);
+}
+
+static void readWildcardToStringList(char* filename, void* wildcardList)
+{
+    struct stringListNode** wildcardListConverted = (struct stringListNode**)wildcardList;
+
+    stringList_add(wildcardListConverted, readWildcard(filename));
+}
+
+static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorIntRepListNode* list)
+{
+    int randomWildcardIndex = (rand() / RAND_MAX) * wildcardMutatorIntRepList_length(list);
+
+    return wildcardMutatorIntRepList_get(list, randomWildcardIndex);
+}
+
 #pragma endregion
 
 #ifdef DEBUG
@@ -96,38 +155,6 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
     {
         stringList_iteri(stringList, printStri);
     }
-
-    int main()
-    {
-        struct wildcardMutator* mutator = malloc(sizeof(struct wildcardMutator));
-        char* wildcardTest = "a *; b *; quit";
-        struct wildcardMutatorIntRep* wildcardTestIntRep = parseWildcard(wildcardTest);
-
-        mutator->intRep = wildcardTestIntRep;
-        mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
-        mutator->mutatedOutBuffer = calloc(mutator->mutatedOutBufferSize, sizeof(char));
-
-        srand(5);
-
-        generateMutatedInput(wildcardTestIntRep, "toto", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        printf("--\n%s\n", mutator->mutatedOutBuffer);
-
-        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        generateMutatedInput(wildcardTestIntRep, "titi", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        printf("--\n%s\n", mutator->mutatedOutBuffer);
-
-        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        generateMutatedInput(wildcardTestIntRep, "tutu", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        printf("--\n%s\n", mutator->mutatedOutBuffer);
-
-        strReset(mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        generateMutatedInput(wildcardTestIntRep, "tata", mutator->mutatedOutBuffer, mutator->mutatedOutBufferSize);
-        printf("--\n%s\n", mutator->mutatedOutBuffer);
-
-        afl_custom_deinit(mutator);
-
-        return EXIT_SUCCESS;
-    }
 #endif
 
 #pragma region AFL++ functions
@@ -135,12 +162,13 @@ static void generateMutatedInput(struct wildcardMutatorIntRep* parsedWildcard, c
 struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct wildcardMutator* mutator = (struct wildcardMutator*)malloc(sizeof(struct wildcardMutator));
-    char* wildcard = readWildcard(ENV_WILDCARD_FILE_PATH);
+    struct stringListNode* wildcardsFilenames = readWildcardsFilenames(ENV_WILDCARD_DIR_PATH);
+    struct stringListNode* wildcards = stringList_init();
     char* rawDebugFlag = getenv(ENV_WILDCARD_DEBUG_MODE);
     bool debugFlag;
 
     assert(mutator != (struct wildcardMutator*)NULL);
-    assert(wildcard != (char*)NULL);
+    assert(wildcardsFilenames != (struct stringListNode*)NULL);
 
     srand(seed);    // Random initialization
 
@@ -154,14 +182,21 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
     }
 
     mutator->afl = afl;
-    mutator->intRep = parseWildcard(wildcard);
+    mutator->intRepList = wildcardMutatorIntRepList_init();
     mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
     mutator->mutatedOutBuffer = (char*)calloc(mutator->mutatedOutBufferSize, sizeof(char));
     mutator->debug = debugFlag;
 
+    stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
+    stringList_iterd(wildcards, addWildcardMutatorIntRepToIntRepsFromFilename, &mutator->intRepList);
+
     assert(mutator->mutatedOutBuffer != (char*)NULL);
 
-    free(wildcard);
+    stringList_iter(wildcardsFilenames, freeString);
+    stringList_iter(wildcards, freeString);
+
+    stringList_free(&wildcardsFilenames);
+    stringList_free(&wildcards);
 
     OKF("WILDCARD Mutator ready !");
 
@@ -171,10 +206,11 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t buf_size, unsigned char **out_buf, unsigned char *add_buf, size_t add_buf_size, size_t max_size)
 {
     size_t mutatedInputLength;
+    struct wildcardMutatorIntRep* intRep = getRandomWildcard(data->intRepList);
 
     // Mutate function call to add here
     strReset(data->mutatedOutBuffer, data->mutatedOutBufferSize);
-    generateMutatedInput(data->intRep, (char*)buf, data->mutatedOutBuffer, max_size);
+    generateMutatedInput(intRep, (char*)buf, data->mutatedOutBuffer, max_size);
     mutatedInputLength = strlen(data->mutatedOutBuffer);
 
     *out_buf = (unsigned char*)(data->mutatedOutBuffer);
@@ -189,7 +225,8 @@ size_t afl_custom_fuzz(struct wildcardMutator* data, unsigned char *buf, size_t 
 
 void afl_custom_deinit(struct wildcardMutator* data)
 {
-    free(data->intRep);
+    wildcardMutatorIntRepList_iter(data->intRepList, freeIntRep);
+    wildcardMutatorIntRepList_free(&(data->intRepList));
     free(data->mutatedOutBuffer);
     free(data);
 }
