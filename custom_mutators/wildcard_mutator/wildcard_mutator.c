@@ -34,19 +34,25 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
     DIR* dirCursor;
     char* wildcardsDir = getenv(wildcardsDirEnvVar);
 
+    fprintf(stderr, "%s\n", wildcardsDir);
+
     dirCursor = opendir(wildcardsDir);
 
     if (dirCursor != (DIR*)NULL)
     {
-        do
+        dirElement = readdir(dirCursor);
+
+        while (dirElement != (struct dirent*)NULL)
         {
-            dirElement = readdir(dirCursor);
+            printf("%s\n", dirElement->d_name);
 
             str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
 
             strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
             stringList_add(&result, str);
-        } while (dirCursor != (DIR*)NULL);
+
+            dirElement = readdir(dirCursor);
+        }
     }
     else
     {
@@ -156,6 +162,11 @@ static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorInt
     void stringList_printStringList(struct stringListNode* stringList)
     {
         stringList_iteri(stringList, printStri);
+    }
+
+    int main()
+    {
+        struct stringListNode* wildcardsFilenames = readWildcardsFilenames(ENV_WILDCARD_DIR_PATH);
     }
 #endif
 
