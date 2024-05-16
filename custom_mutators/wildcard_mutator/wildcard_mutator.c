@@ -34,8 +34,6 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
     DIR* dirCursor;
     char* wildcardsDir = getenv(wildcardsDirEnvVar);
 
-    fprintf(stderr, "%s\n", wildcardsDir);
-
     dirCursor = opendir(wildcardsDir);
 
     if (dirCursor != (DIR*)NULL)
@@ -44,8 +42,6 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
 
         while (dirElement != (struct dirent*)NULL)
         {
-            printf("%s\n", dirElement->d_name);
-
             str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
 
             strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
