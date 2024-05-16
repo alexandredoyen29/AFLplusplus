@@ -4,24 +4,16 @@
 
 static char* readWildcard(char* wildcardFileName)
 {
-    char* wildcardFilePath = getenv(wildcardFileName);
     char* result = malloc(WILDCARD_FILE_READ_BUFFER_SIZE * sizeof(char));
     int fdWildcardFilePath;
 
     assert(result != (char*)NULL);
 
-    if (wildcardFilePath == (char*)NULL)
-    {
-        perror("[readWildcard()] -> WILDCARD file not found");
-    }
-    else
-    {
-        fdWildcardFilePath = open(wildcardFilePath, O_RDONLY);
+    fdWildcardFilePath = open(wildcardFileName, O_RDONLY);
 
-        read(fdWildcardFilePath, result, WILDCARD_FILE_READ_BUFFER_SIZE * sizeof(char));
+    read(fdWildcardFilePath, result, WILDCARD_FILE_READ_BUFFER_SIZE * sizeof(char));
 
-        close(fdWildcardFilePath);
-    }
+    close(fdWildcardFilePath);
 
     return result;
 }
