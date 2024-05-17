@@ -109,7 +109,7 @@ static void freeIntRep(struct wildcardMutatorIntRep* intRep)
     free(intRep);
 }
 
-static void addWildcardMutatorIntRepToIntReps(char* wildcard, void* intRepList)
+static void addWildcardToIntReps(char* wildcard, void* intRepList)
 {
     struct wildcardMutatorIntRepListNode** intRepListConverted = (struct wildcardMutatorIntRepListNode**)intRepList;
 
@@ -179,13 +179,11 @@ static void addPathToWildcardFilename(char* wildcardFilename, void* path)
 
         wildcardsFilenames = readWildcardsFilenames(wildcardsDir);
 
-        stringList_printStringList(wildcardsFilenames);
-
         stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsDir);
-        //stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
-        //stringList_iterd(wildcards, addWildcardMutatorIntRepToIntReps, &intRepList);
+        stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
+        stringList_iterd(wildcards, addWildcardToIntReps, &intRepList);
 
-        stringList_printStringList(wildcardsFilenames);
+        stringList_printStringList(wildcards);
     }
 #endif
 
@@ -227,7 +225,7 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsFilenames);
     stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
-    stringList_iterd(wildcards, addWildcardMutatorIntRepToIntReps, &mutator->intRepList);
+    stringList_iterd(wildcards, addWildcardToIntReps, &mutator->intRepList);
 
     assert(mutator->mutatedOutBuffer != (char*)NULL);
 
@@ -267,6 +265,7 @@ void afl_custom_deinit(struct wildcardMutator* data)
     wildcardMutatorIntRepList_iter(data->intRepList, freeIntRep);
     wildcardMutatorIntRepList_free(&(data->intRepList));
     free(data->mutatedOutBuffer);
+    free(data->wildcardsDir);
     free(data);
 }
 
