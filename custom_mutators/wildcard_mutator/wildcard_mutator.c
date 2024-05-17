@@ -35,7 +35,7 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDir)
         {
             if ((strcmp(dirElement->d_name, ".") != 0) && (strcmp(dirElement->d_name, "..") != 0))
             {
-                str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
+                str = (char*)malloc(MAX_STRING_SIZE * sizeof(char));
 
                 strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
                 stringList_add(&result, str);
