@@ -223,7 +223,7 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 
     strncpy(mutator->wildcardsDir, wildcardsDir, MAX_STRING_SIZE);
 
-    stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsFilenames);
+    stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsDir);
     stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
     stringList_iterd(wildcards, addWildcardToIntReps, &mutator->intRepList);
 
