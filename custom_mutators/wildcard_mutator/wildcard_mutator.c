@@ -55,7 +55,7 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDir)
 static struct wildcardMutatorIntRep* parseWildcard(char* wildcardContent)
 {
     struct wildcardMutatorIntRep* result = malloc(sizeof(struct wildcardMutatorIntRep));
-    char* wildcardContentPart = malloc(strlen(wildcardContent) * sizeof(char));
+    char* wildcardContentPart = malloc(MAX_STRING_SIZE * sizeof(char));
 
     assert(result != (struct wildcardMutatorIntRep*)NULL);
     assert(wildcardContentPart != (char*)NULL);
