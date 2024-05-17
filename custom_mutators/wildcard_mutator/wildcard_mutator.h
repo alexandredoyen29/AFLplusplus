@@ -34,6 +34,7 @@ struct wildcardMutator
     bool debug;
 
     struct wildcardMutatorIntRepListNode* intRepList;
+    char* wildcardsDir;
 };
 
 #ifdef DEBUG

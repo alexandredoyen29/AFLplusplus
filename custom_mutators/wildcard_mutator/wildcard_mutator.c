@@ -18,13 +18,12 @@ static char* readWildcard(char* wildcardFileName)
     return result;
 }
 
-static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
+static struct stringListNode* readWildcardsFilenames(char* wildcardsDir)
 {
     struct dirent* dirElement;
     struct stringListNode* result = stringList_init();
     char* str;
     DIR* dirCursor;
-    char* wildcardsDir = getenv(wildcardsDirEnvVar);
 
     dirCursor = opendir(wildcardsDir);
 
@@ -34,17 +33,20 @@ static struct stringListNode* readWildcardsFilenames(char* wildcardsDirEnvVar)
 
         while (dirElement != (struct dirent*)NULL)
         {
-            str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
+            if ((strcmp(dirElement->d_name, ".") != 0) && (strcmp(dirElement->d_name, "..") != 0))
+            {
+                str = (char*)malloc(MAX_STRING_SIZE * sizeof(char*));
 
-            strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
-            stringList_add(&result, str);
+                strncpy(str, dirElement->d_name, MAX_STRING_SIZE);
+                stringList_add(&result, str);
+            }
 
             dirElement = readdir(dirCursor);
         }
     }
     else
     {
-        perror("[readWildcard()] -> Error when reading wildcard dir");
+        perror("[readWildcardsFilenames()] -> Error when reading wildcard dir");
     }
 
     return result;
@@ -107,7 +109,7 @@ static void freeIntRep(struct wildcardMutatorIntRep* intRep)
     free(intRep);
 }
 
-static void addWildcardMutatorIntRepToIntRepsFromFilename(char* wildcard, void* intRepList)
+static void addWildcardMutatorIntRepToIntReps(char* wildcard, void* intRepList)
 {
     struct wildcardMutatorIntRepListNode** intRepListConverted = (struct wildcardMutatorIntRepListNode**)intRepList;
 
@@ -133,6 +135,20 @@ static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorInt
     return wildcardMutatorIntRepList_get(list, randomWildcardIndex);
 }
 
+static void addPathToWildcardFilename(char* wildcardFilename, void* path)
+{
+    char* pathConverted = (char*)path;
+    char* currentWildcardFilename = malloc(MAX_STRING_SIZE * sizeof(char));
+
+    strncpy(currentWildcardFilename, wildcardFilename, MAX_STRING_SIZE);
+
+    strncpy(wildcardFilename, pathConverted, MAX_STRING_SIZE);
+    strConcat(wildcardFilename, "/", MAX_STRING_SIZE);
+    strConcat(wildcardFilename, currentWildcardFilename, MAX_STRING_SIZE);
+
+    free(currentWildcardFilename);
+}
+
 #pragma endregion
 
 #ifdef DEBUG
@@ -154,7 +170,22 @@ static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorInt
 
     int main()
     {
-        struct stringListNode* wildcardsFilenames = readWildcardsFilenames(ENV_WILDCARD_DIR_PATH);
+        struct stringListNode* wildcardsFilenames;
+        struct stringListNode* wildcards = stringList_init();
+        struct wildcardMutatorIntRepListNode* intRepList = wildcardMutatorIntRepList_init();
+        char* wildcardsDir = getenv(ENV_WILDCARD_DIR_PATH);
+
+        printf("%s\n", wildcardsDir);
+
+        wildcardsFilenames = readWildcardsFilenames(wildcardsDir);
+
+        stringList_printStringList(wildcardsFilenames);
+
+        stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsDir);
+        //stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
+        //stringList_iterd(wildcards, addWildcardMutatorIntRepToIntReps, &intRepList);
+
+        stringList_printStringList(wildcardsFilenames);
     }
 #endif
 
@@ -163,10 +194,13 @@ static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorInt
 struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
 {
     struct wildcardMutator* mutator = (struct wildcardMutator*)malloc(sizeof(struct wildcardMutator));
-    struct stringListNode* wildcardsFilenames = readWildcardsFilenames(ENV_WILDCARD_DIR_PATH);
+    struct stringListNode* wildcardsFilenames;
     struct stringListNode* wildcards = stringList_init();
     char* rawDebugFlag = getenv(ENV_WILDCARD_DEBUG_MODE);
     bool debugFlag;
+    char* wildcardsDir = getenv(ENV_WILDCARD_DIR_PATH);
+
+    wildcardsFilenames = readWildcardsFilenames(wildcardsDir);
 
     assert(mutator != (struct wildcardMutator*)NULL);
     assert(wildcardsFilenames != (struct stringListNode*)NULL);
@@ -187,9 +221,13 @@ struct wildcardMutator* afl_custom_init(afl_state_t *afl, unsigned int seed)
     mutator->mutatedOutBufferSize = MAX_STRING_SIZE;
     mutator->mutatedOutBuffer = (char*)calloc(mutator->mutatedOutBufferSize, sizeof(char));
     mutator->debug = debugFlag;
+    mutator->wildcardsDir = (char*)malloc(MAX_STRING_SIZE * sizeof(char));
 
+    strncpy(mutator->wildcardsDir, wildcardsDir, MAX_STRING_SIZE);
+
+    stringList_map_inplace_d(wildcardsFilenames, addPathToWildcardFilename, wildcardsFilenames);
     stringList_iterd(wildcardsFilenames, readWildcardToStringList, &wildcards);
-    stringList_iterd(wildcards, addWildcardMutatorIntRepToIntRepsFromFilename, &mutator->intRepList);
+    stringList_iterd(wildcards, addWildcardMutatorIntRepToIntReps, &mutator->intRepList);
 
     assert(mutator->mutatedOutBuffer != (char*)NULL);
 
