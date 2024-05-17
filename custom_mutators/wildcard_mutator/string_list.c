@@ -106,25 +106,25 @@ char* stringList_next(struct stringListNode** stringListPtr)
     return result;
 }
 
-void stringList_map_inplace(struct stringListNode* stringList, void (*transformation)(char* str))
+void stringList_map_inplace(struct stringListNode* stringList, void (*transformation)(char** str))
 {
     struct stringListNode* currentNode = stringList;
 
     while (currentNode != (struct stringListNode*)NULL)
     {
-        transformation(currentNode->nodeContent);
+        transformation(&currentNode->nodeContent);
 
         currentNode = currentNode->nextNode;
     }
 }
 
-void stringList_map_inplace_d(struct stringListNode* stringList, void (*transformation)(char* str, void* data), void* data)
+void stringList_map_inplace_d(struct stringListNode* stringList, void (*transformation)(char** str, void* data), void* data)
 {
     struct stringListNode* currentNode = stringList;
 
     while (currentNode != (struct stringListNode*)NULL)
     {
-        transformation(currentNode->nodeContent, data);
+        transformation(&currentNode->nodeContent, data);
 
         currentNode = currentNode->nextNode;
     }

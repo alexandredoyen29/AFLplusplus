@@ -19,7 +19,7 @@ void stringList_iteri(struct stringListNode* stringList, void (*action)(char* st
 void stringList_iterd(struct stringListNode* stringList, void (*action)(char* str, void* data), void* data);
 bool stringList_hasNext(struct stringListNode* stringList);
 char* stringList_next(struct stringListNode** stringListPtr);
-void stringList_map_inplace(struct stringListNode* stringList, void (*transformation)(char* str));
-void stringList_map_inplace_d(struct stringListNode* stringList, void (*transformation)(char* str, void* data), void* data);
+void stringList_map_inplace(struct stringListNode* stringList, void (*transformation)(char** str));
+void stringList_map_inplace_d(struct stringListNode* stringList, void (*transformation)(char** str, void* data), void* data);
 
 #endif

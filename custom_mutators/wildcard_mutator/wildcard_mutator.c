@@ -135,9 +135,10 @@ static struct wildcardMutatorIntRep* getRandomWildcard(struct wildcardMutatorInt
     return wildcardMutatorIntRepList_get(list, randomWildcardIndex);
 }
 
-static void addPathToWildcardFilename(char* wildcardFilename, void* path)
+static void addPathToWildcardFilename(char** wildcardFilenamePtr, void* path)
 {
     char* pathConverted = (char*)path;
+    char* wildcardFilename = *wildcardFilenamePtr;
     char* currentWildcardFilename = malloc(MAX_STRING_SIZE * sizeof(char));
 
     strncpy(currentWildcardFilename, wildcardFilename, MAX_STRING_SIZE);
